@@ -1,0 +1,1 @@
+INSERT INTO account(name, balance) VALUES('ACC1',123.4);
