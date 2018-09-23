@@ -7,4 +7,4 @@ To run the application clone the application in local, and execute command "mvn 
 
 swagger UI is configured to test all the APIs at http://localhost:8080/swagger-ui.html
 
-test cases are incomplete as of now.
+basic junit test cases are available.

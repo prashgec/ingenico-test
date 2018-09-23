@@ -1,8 +1,10 @@
 package com.ingenico.test;
 
+import com.ingenico.test.config.DataSourceConfig;
 import com.ingenico.test.controller.AccountController;
 import com.ingenico.test.service.AccountService;
 import com.ingenico.test.vo.Account;
+import org.json.JSONException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,7 +16,10 @@ import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,36 +33,75 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = IngenicoTestApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class IngenicoTestApplicationTests {
 
-	@Mock
-	AccountService accountService;
 
-	@InjectMocks
-	AccountController controller = new AccountController(accountService);
 
+	/*@Autowired
 	private MockMvc mockMvc;
 
-	@Before
-	public void setUp() throws Exception {
-		MockitoAnnotations.initMocks(this);
-		this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
-	}
 
+	@MockBean
+	AccountService service;
 
+	@MockBean
+	DataSourceConfig config;*/
 
+	@LocalServerPort
+	private int port;
+
+	TestRestTemplate restTemplate = new TestRestTemplate();
+
+	HttpHeaders headers = new HttpHeaders();
+
+	/**
+	 * Testing default get account service
+	 * @throws Exception
+	 */
 	@Test
-	public void getAllAccounts () throws Exception
+	public void getAllAccountsTest () throws Exception
 	{
-		Account account= new Account();
-		account.setName("ACC1");
-		account.setBalance(new BigDecimal("123.4"));
-		List<Account> accList= new ArrayList<>();
-		accList.add(account);
 
-		Assert.assertEquals(account, controller.getAllAccounts().iterator().next());
+		HttpEntity<String> entity = new HttpEntity<String>(null, headers);
+
+		ResponseEntity<String> response = restTemplate.exchange(
+				createURLWithPort("/account/get"),
+				HttpMethod.GET, entity, String.class);
+
+		String expected = "[{\"name\":\"ACC1\",\"balance\":123.40}]";
+		JSONAssert.assertEquals(expected, response.getBody(), true);
 	}
+
+	private String createURLWithPort(String uri) {
+		return "http://localhost:" + port + uri;
+	}
+
+	/**
+	 * Testing create account functionality
+	 * @throws JSONException
+	 */
+	@Test
+	public void createAccountTest() throws JSONException {
+		Account account = new Account("ACC1",new BigDecimal("234.7"));
+		Account account1 = new Account("ACC2", new BigDecimal("1234"));
+		HttpEntity<Account> entity = new HttpEntity<Account>(account, headers);
+		HttpEntity<Account> entity1 = new HttpEntity<Account>(account1, headers);
+		ResponseEntity<String> response = restTemplate.exchange(
+				createURLWithPort("/account/create"),
+				HttpMethod.POST, entity, String.class);
+		ResponseEntity<String> response1 = restTemplate.exchange(
+				createURLWithPort("/account/create"),
+				HttpMethod.POST, entity1, String.class);
+		String expected ="{\"status\":\"ERROR\",\"message\":\"Account already available\"}";
+		String expected1="{\"status\":\"SUCCESS\",\"message\":\"Account created successfully!\"}";
+		JSONAssert.assertEquals(expected,response.getBody(),true);
+		JSONAssert.assertEquals(expected1,response1.getBody(),true);
+
+	}
+
+
+
 
 }

@@ -8,7 +8,10 @@ import com.ingenico.test.vo.TransferRequest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("account")
@@ -20,14 +23,14 @@ public class AccountController {
 
     @ApiOperation(value = "Service to create account with basic details", response = Response.class)
     @PostMapping("/create")
-    public Response createAccount(@RequestBody Account account) {
+    public Response createAccount(@Valid @RequestBody Account account) {
         return accountService.createAccount(account);
 
     }
 
     @ApiOperation(value = "Service to transfer amount from one account to another account", response = Response.class)
     @PostMapping("/transfer")
-    public Response transferAmount(@RequestBody TransferRequest transferRequest) {
+    public Response transferAmount(@Valid @RequestBody TransferRequest transferRequest) {
       return accountService.transferAmount(transferRequest);
     }
 
